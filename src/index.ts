@@ -1,32 +1,36 @@
-/**
- * Welcome to Cloudflare Workers! This is your first worker.
- *
- * - Run `npm run dev` in your terminal to start a development server
- * - Open a browser tab at http://localhost:8787/ to see your worker in action
- * - Run `npm run deploy` to publish your worker
- *
- * Learn more at https://developers.cloudflare.com/workers/
- */
+import TelegramBot from "./TelegramBot";
+import Storage from "./storage";
 
 export interface Env {
-	// Example binding to KV. Learn more at https://developers.cloudflare.com/workers/runtime-apis/kv/
-	// MY_KV_NAMESPACE: KVNamespace;
-	//
-	// Example binding to Durable Object. Learn more at https://developers.cloudflare.com/workers/runtime-apis/durable-objects/
-	// MY_DURABLE_OBJECT: DurableObjectNamespace;
-	//
-	// Example binding to R2. Learn more at https://developers.cloudflare.com/workers/runtime-apis/r2/
-	// MY_BUCKET: R2Bucket;
-	//
-	// Example binding to a Service. Learn more at https://developers.cloudflare.com/workers/runtime-apis/service-bindings/
-	// MY_SERVICE: Fetcher;
-	//
-	// Example binding to a Queue. Learn more at https://developers.cloudflare.com/queues/javascript-apis/
-	// MY_QUEUE: Queue;
+	DATA: KVNamespace;
+	TELEGRAM_BOT_TOKEN: string;
+	ALLOWED_USERS: string;
 }
+
+let bot: TelegramBot;
 
 export default {
 	async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-		return new Response('Hello World!');
+		const url = new URL(request.url);
+		const path = url.pathname;
+		const method = request.method;
+		const webhookEndpoint = env.TELEGRAM_BOT_TOKEN.slice(0, 10);
+		const workerUrl = `${url.protocol}//${url.host}/${webhookEndpoint}`;
+		bot = bot || new TelegramBot(env.TELEGRAM_BOT_TOKEN, env.ALLOWED_USERS);
+		bot.storage = new Storage(env);
+		if (method === "POST" && path === '/' + webhookEndpoint) {
+			const update: any = await request.json();
+			if ("message" in update) {
+				ctx.waitUntil(bot.handleMessage(update.message));
+			}
+		} else if (method === "GET" && path === "/configure-webhook") {
+			const res = await bot.setWebHook(workerUrl);
+			if (res.ok) {
+				return new Response("Webhook set successfully");
+			} else {
+				return new Response("Failed to set Webhook");
+			}
+		}
+		return new Response("Ok");
 	},
 };
