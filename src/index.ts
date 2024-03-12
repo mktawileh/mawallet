@@ -1,4 +1,4 @@
-import TelegramBot from "./TelegramBot";
+import MaWalletBot from "./MaWalletBot";
 import Storage from "./storage";
 
 export interface Env {
@@ -7,7 +7,7 @@ export interface Env {
 	ALLOWED_USERS: string;
 }
 
-let bot: TelegramBot;
+let bot: MaWalletBot;
 
 export default {
 	async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -16,7 +16,7 @@ export default {
 		const method = request.method;
 		const webhookEndpoint = env.TELEGRAM_BOT_TOKEN.slice(0, 10);
 		const workerUrl = `${url.protocol}//${url.host}/${webhookEndpoint}`;
-		bot = bot || new TelegramBot(env.TELEGRAM_BOT_TOKEN, env.ALLOWED_USERS);
+		bot = bot || new MaWalletBot(env.TELEGRAM_BOT_TOKEN, env.ALLOWED_USERS);
 		bot.storage = new Storage(env);
 		if (method === "POST" && path === '/' + webhookEndpoint) {
 			const update: any = await request.json();

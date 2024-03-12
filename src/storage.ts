@@ -1,10 +1,16 @@
 import { Env } from ".";
 
+
+export type Commands = 'date' | 'show' | 'start' | 'choose-month' | 'trans';
+
 type Chat = {
   first_name: string;
   username: string;
   language_code?: string;
   last_show_msg_id?: number;
+  last_command?: Commands;
+  last_msg_text?: string;
+  last_bot_msg?: number;
   wallet: number;
   trans: Transaction[]
 }
