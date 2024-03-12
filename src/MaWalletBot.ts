@@ -28,10 +28,16 @@ export default class MaWalletBot extends TelegarmBot {
     if (!chat) return;
     let res;
     const trans_rgex = /([-+]?[0-9]+(?:\.[0-9]+)?)(?:\s?(.*)?)/;
-    if (/[0-9]+/.test(msg.text) && chat.last_command == 'choose-month') {
+    if (/\/now/.test(msg.text)) {
+      const year = new Date().getFullYear();
+      const month = new Date().getMonth();
+      await this.sendStat(id, year, month);
+      await this.updateLastCommand(id, 'get-stat');
+    } else if (/[0-9]+/.test(msg.text) && chat.last_command == 'choose-month') {
       const year = parseInt(chat.last_msg_text as string);
       const month = parseInt(msg.text) - 1
       await this.sendStat(id, year, month);
+      await this.updateLastCommand(id, 'get-stat');
     } else if (/[0-9]+/.test(msg.text) && chat.last_command == 'date') {
       await this.updateLastMsgText(id, msg.text);
       await this.askForDate(id, false);
@@ -92,9 +98,9 @@ export default class MaWalletBot extends TelegarmBot {
     for (let tran of chat.trans) {
       const tran_year = new Date(tran.date * 1000).getFullYear();
       const tarn_month = new Date(tran.date * 1000).getMonth();
-      // if (tran_year <= year && tarn_month < month) {
-      //   prev += tran.value;
-      // }
+      if (tran_year <= year && tarn_month < month) {
+        prev += tran.value;
+      }
       if (tran_year != year || tarn_month != month) continue;
       if (tran.value >= 0) income += tran.value;
       else outcome += -tran.value;

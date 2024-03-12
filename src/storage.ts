@@ -1,7 +1,7 @@
 import { Env } from ".";
 
 
-export type Commands = 'date' | 'show' | 'start' | 'choose-month' | 'trans';
+export type Commands = 'date' | 'show' | 'start' | 'choose-month' | 'trans' | 'get-stat';
 
 type Chat = {
   first_name: string;
